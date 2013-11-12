@@ -1,0 +1,41 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+	<title>Mountain jump</title>
+    <link rel="stylesheet" href="main.css">
+</head>
+
+<body>
+	<div class="container">
+		<canvas id="canvas">
+			Aww, your browser doesn't support HTML5!
+		</canvas>
+
+		<div id="mainMenu">
+			<h1>Mountain jump</h1>
+			<h3>using HTML5,</h3>
+
+			<p class="info">
+				use
+				<span class="key left">←</span>
+				<span class="key right">→</span>
+				to move for one or two blocks
+			</p>
+			<a class="button" href="javascript:newGame()">Play</a>
+		</div>
+
+		<div id="gameOverMenu">
+			<h1>game over!</h1>
+			<h3 id="gameOverScore">you scored 0 points</h3>
+            <a class="button" href="javascript:showMenu()">Back to menu</a>
+		</div>
+		
+		<img id="player" src="images/player.png"/>
+		<div id="scoreBoard">
+			<p id="score">0</p>
+		</div>
+
+	</div>
+    <script type="text/javascript" src="js/main.js"></script>
+</body>
+</html>	
