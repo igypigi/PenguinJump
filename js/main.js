@@ -5,25 +5,37 @@ window.requestAnimFrame = (function() {
 		window.setTimeout(callback, 1000 / 60);
 	};
 })();
-
+// Prototype functions
 Array.prototype.clone = function() { return this.slice(0); };
 
+// Height and width of canvas
 var canvas = document.getElementById('canvas');
 var ctx = canvas.getContext('2d');
-var width = 422, height = 552;
+var width = 422,
+    height = 552;
 canvas.width = width;
 canvas.height = height;
 
-//Variables for game
+// Settings for the game
+// Number of platforms per frame
+var numbPlatforms = 6,
+    // Difference in height between two platforms
+    platformHeightDifference = height / 2 / numbPlatforms,
+    // Player start position == Padding from bottom
+    startPosition = height - 100,
+    // Width of each platform and of player
+    platformWidth = width / numbPlatforms,
+    // Possible platform arrangements
+    possiblePlatformArrangement = [[1,1,1,0,1,1,1], [1,0,1,0,1,1], [1,1,0,1,0,1], [1,0,1,0,1,0,1]],
+    // On which platform to stop player jumping out of frame
+    jumpUntilPlatformIndex = 1;
+
+//Variables for the game
 var platforms,
 	player,
+    // Index number of the platform the player is currently on
     currentPlatformIndex,
-    numbPlatforms = 6,
-    platformHeight = height / 2 / numbPlatforms,
-    startPosition = height - 100,
-    platformWidth = width / numbPlatforms,
-    possiblePlatformArrangement = [[1,1,1,0,1,1,1], [1,0,1,0,1,1], [1,1,0,1,0,1], [1,0,1,0,1,0,1]],
-    currentPlatformArrangement = [];
+    currentPlatformArrangement;
 
 //Player object
 var Player = function() {
@@ -42,16 +54,18 @@ var Player = function() {
 		} catch (e) {}
 	};
 
-    this.jumpOne = function() {
-        if (currentPlatformIndex++ < 1) {
+    this.jumpOnePlatform = function() {
+        console.log('Jump one platform');
+        // Stop the player on first platform to avoid jumping out of frame
+        if (currentPlatformIndex++ < jumpUntilPlatformIndex) {
             player.x += player.width;
-            player.y -= platformHeight;
+            player.y -= platformHeightDifference;
+            return;
         }
-
-        // Move platforms on each jump
+        // Move platforms on each jump to the left
         platforms.forEach(function(p, i) {
             p.x -= player.width;
-            p.y += platformHeight;
+            p.y += platformHeightDifference;
         });
         // Remove first platform
         platforms.shift();
@@ -59,9 +73,10 @@ var Player = function() {
         platforms.push(new Platform(numbPlatforms-1, currentPlatformArrangement.pop()));
     };
 
-    this.jumpTwo = function() {
-        this.jumpOne();
-        this.jumpOne();
+    this.jumpTwoPlatforms = function() {
+        console.log('Jump two platforms');
+        this.jumpOnePlatform();
+        this.jumpOnePlatform();
     };
 };
 
@@ -69,11 +84,11 @@ var Player = function() {
 function Platform(index, type) {
     // Platform size
 	this.width = platformWidth;
-	this.height = platformHeight;
+	this.height = height;
 
     // Platform position
 	this.x = index * this.width;
-	this.y = startPosition - index*this.height;
+	this.y = startPosition - index * platformHeightDifference;
 
     // Platform type: 0->Empty, 1->Full
     this.type = type;
@@ -86,7 +101,7 @@ function Platform(index, type) {
 	this.draw = function() {
 		try {
             ctx.fillStyle=this.color;
-            ctx.fillRect(this.x, this.y, this.width, height);
+            ctx.fillRect(this.x, this.y, this.width, this.height);
 		} catch (e) {}
 	};
 }
@@ -102,8 +117,8 @@ function init() {
 		//Adding keyboard controls
 		document.onkeydown = function(e) {
             switch (e.keyCode) {
-                case 39: player.jumpOne(); console.log('Jump one'); break;
-                case 37: player.jumpTwo(); console.log('Jump two');
+                case 39: player.jumpOnePlatform(); break;
+                case 37: player.jumpTwoPlatforms();
             }
 		};
         player.draw();
@@ -123,7 +138,7 @@ function init() {
         playerCalculation();
 
         // Is platform empty
-        if (platforms[1].type == 0) {
+        if (platforms[jumpUntilPlatformIndex].type == 0) {
             player.isDead = true;
             gameOver();
         }
@@ -134,7 +149,7 @@ function init() {
 	}
 
 	function animloop() {
-        // If player dead don't update
+        // If player dead don't animate
         if (player.isDead) return;
 		update();
 		requestAnimFrame(animloop);
@@ -143,13 +158,22 @@ function init() {
 	hideMenu();
 }
 
+function showScoreBoard() {
+    document.getElementById('scoreBoard').style.zIndex = 1;
+}
+
+function hideScoreBoard() {
+    document.getElementById('scoreBoard').style.zIndex = -1;
+}
+
 function newGame() {
+    // Reset or variables
     player = new Player();
     platforms = [];
     for (var i = 0; i < numbPlatforms; i++) platforms.push(new Platform(i, 1));
     currentPlatformIndex = 0;
     currentPlatformArrangement = [];
-    document.getElementById('scoreBoard').style.zIndex = 1;
+    showScoreBoard();
     hideMenu();
     init();
 }
@@ -168,7 +192,7 @@ function showMenu() {
 
 // Show game over menu
 function gameOver() {
-    document.getElementById('scoreBoard').style.zIndex = -1;
+    hideScoreBoard();
     hideMenu();
 	document.getElementById('gameOverMenu').style.zIndex = 1;
 	document.getElementById('gameOverScore').innerHTML = 'You scored ' + currentPlatformIndex + ' points!';
