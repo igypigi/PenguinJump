@@ -34,16 +34,16 @@ var fps = {
 // Height and width of canvas
 var canvas = document.getElementById('canvas');
 var ctx = canvas.getContext('2d');
-var width = 422,
-    height = 552;
+var width = 420,
+    height = 560;
 canvas.width = width;
 canvas.height = height;
 
 // Settings for the game
 // Number of platforms per frame
-var numbPlatforms = 20,
+var numbPlatforms = 5,
     // Difference in height between two platforms
-    platformHeightDifference = height / 2 / numbPlatforms,
+    platformHeightDifference = (height / 2 / numbPlatforms).toFixed(0),
     // Player start position == Padding from bottom
     startPosition = height - 100,
     // Width of each platform and of player
@@ -61,6 +61,7 @@ var platforms,
     currentPlatformArrangement;
 
 //Player object
+var jumpOne = false;
 var Player = function() {
 	this.isDead = false;
     // Player object size (square)
@@ -79,27 +80,32 @@ var Player = function() {
 
     this.jumpOnePlatform = function() {
         console.log('Jump one platform');
+        console.log('Player y: '+player.y);
+        console.log('Player x: '+player.x);
+        nextPlayerX = player.x + parseInt(platformWidth);
+        nextPlayerY = player.y - parseInt(platformHeightDifference);
         // Stop the player on first platform to avoid jumping out of frame
-        if (currentPlatformIndex++ < jumpUntilPlatformIndex) {
-            player.x += player.width;
-            player.y -= platformHeightDifference;
-            return;
-        }
-        // Move platforms on each jump to the left
-        platforms.forEach(function(p, i) {
-            p.x -= player.width;
-            p.y += platformHeightDifference;
-        });
-        // Remove first platform
-        platforms.shift();
-        // Add next one
-        platforms.push(new Platform(numbPlatforms-1, currentPlatformArrangement.pop()));
+        jumpOne = true;
+//        if (currentPlatformIndex++ < jumpUntilPlatformIndex) {
+//            player.x += player.width;
+//            player.y -= platformHeightDifference;
+//            return;
+//        }
+//        // Move platforms on each jump to the left
+//        platforms.forEach(function(p, i) {
+//            p.x -= player.width;
+//            p.y += platformHeightDifference;
+//        });
+//        // Remove first platform
+//        platforms.shift();
+//        // Add next one
+//        platforms.push(new Platform(numbPlatforms-1, currentPlatformArrangement.pop()));
     };
 
     this.jumpTwoPlatforms = function() {
         console.log('Jump two platforms');
-        this.jumpOnePlatform();
-        this.jumpOnePlatform();
+//        this.jumpOnePlatform();
+//        this.jumpOnePlatform();
     };
 };
 
@@ -129,9 +135,36 @@ function Platform(index, type) {
 	};
 }
 
+var nextPlayerX;
+var nextPlayerY;
+var xChange = platformWidth;
+var yChange = platformHeightDifference * 2;
+var speed = 5;
 function init() {
 	//Player related calculations and functions
 	function playerCalculation() {
+        if (jumpOne && yChange > 0) {
+            if (yChange < platformHeightDifference / 2) {
+                player.y += speed;
+                if (player.x < nextPlayerX){
+                    player.x += nextPlayerX / (platformHeightDifference / 2);
+                }
+            } else {
+                player.y -= speed;
+                player.x += 0.5 * speed;
+            }
+            yChange -= speed;
+        } else if (jumpOne) {
+            if (player.y != nextPlayerY) {
+                player.y = nextPlayerY;
+            }
+            if (player.x != nextPlayerX) {
+                player.x = nextPlayerX;
+            }
+            yChange = platformHeightDifference * 2;
+            jumpOne = false;
+        }
+
         // If next platform types are empty, randomly select one from possiblePlatformArrangement list
         if (currentPlatformArrangement.length == 0) {
             var index = (Math.random()*(possiblePlatformArrangement.length - 1)).toFixed(0);
