@@ -34,8 +34,8 @@ var fps = {
 // Height and width of canvas
 var canvas = document.getElementById('canvas');
 var ctx = canvas.getContext('2d');
-var width = 420,
-    height = 560;
+var width = 420.0,
+    height = 560.0;
 canvas.width = width;
 canvas.height = height;
 
@@ -51,7 +51,9 @@ var numbPlatforms = 5,
     // Possible platform arrangements
     possiblePlatformArrangement = [[1,1,1,0,1,1,1], [1,0,1,0,1,1], [1,1,0,1,0,1], [1,0,1,0,1,0,1]],
     // On which platform to stop player jumping out of frame
-    jumpUntilPlatformIndex = 1;
+    jumpUntilPlatformIndex = 1,
+    // Player movement speed
+    speed = 20;
 
 //Variables for the game
 var platforms,
@@ -60,8 +62,11 @@ var platforms,
     currentPlatformIndex,
     currentPlatformArrangement;
 
-//Player object
-var jumpOne = false;
+// Player object
+var isJumping = false;
+var nextPlayerX, nextPlayerY;
+// Player position that is left to change
+var xChange, yChange, framesLeft;
 var Player = function() {
 	this.isDead = false;
     // Player object size (square)
@@ -80,12 +85,15 @@ var Player = function() {
 
     this.jumpOnePlatform = function() {
         console.log('Jump one platform');
-        console.log('Player y: '+player.y);
-        console.log('Player x: '+player.x);
-        nextPlayerX = player.x + parseInt(platformWidth);
-        nextPlayerY = player.y - parseInt(platformHeightDifference);
+        // Calculate nex player position coordinates
+        nextPlayerX = player.x + platformWidth;
+        nextPlayerY = player.y - platformHeightDifference;
+        // How much will player actually move each frame
+        xChange = platformWidth / speed;
+        yChange = platformHeightDifference * 2 / speed;
+        framesLeft = speed;
         // Stop the player on first platform to avoid jumping out of frame
-        jumpOne = true;
+        isJumping = true;
 //        if (currentPlatformIndex++ < jumpUntilPlatformIndex) {
 //            player.x += player.width;
 //            player.y -= platformHeightDifference;
@@ -121,7 +129,7 @@ function Platform(index, type) {
 
     // Platform type: 0->Empty, 1->Full
     this.type = type;
-    switch (this.type){
+    switch (this.type) {
         case 0: this.color = 'rgba(0,0,0,0.0)'; break;
         case 1: this.color = '#' + Math.random().toString(16).substr(-6);
     }
@@ -135,34 +143,24 @@ function Platform(index, type) {
 	};
 }
 
-var nextPlayerX;
-var nextPlayerY;
-var xChange = platformWidth;
-var yChange = platformHeightDifference * 2;
-var speed = 5;
 function init() {
 	//Player related calculations and functions
 	function playerCalculation() {
-        if (jumpOne && yChange > 0) {
-            if (yChange < platformHeightDifference / 2) {
-                player.y += speed;
-                if (player.x < nextPlayerX){
-                    player.x += nextPlayerX / (platformHeightDifference / 2);
-                }
+        if (isJumping && framesLeft > 0) {
+            if (framesLeft < parseInt(speed / 3)) {
+                // Fall down
+                player.y += yChange;
             } else {
-                player.y -= speed;
-                player.x += 0.5 * speed;
+                // Jump up
+                player.y -= yChange;
             }
-            yChange -= speed;
-        } else if (jumpOne) {
-            if (player.y != nextPlayerY) {
-                player.y = nextPlayerY;
-            }
-            if (player.x != nextPlayerX) {
-                player.x = nextPlayerX;
-            }
-            yChange = platformHeightDifference * 2;
-            jumpOne = false;
+            player.x += xChange;
+            framesLeft --;
+        } else if (isJumping) {
+            // Fix current user position if necessary
+            if (player.y != nextPlayerY) player.y = nextPlayerY;
+            if (player.x != nextPlayerX) player.x = nextPlayerX;
+            isJumping = false;
         }
 
         // If next platform types are empty, randomly select one from possiblePlatformArrangement list
