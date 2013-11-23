@@ -49,11 +49,11 @@ var numbPlatforms = 5,
     // Width of each platform and of player
     platformWidth = width / numbPlatforms,
     // Possible platform arrangements
-    possiblePlatformArrangement = [[1,1,1,0,1,1,1], [1,0,1,0,1,1], [1,1,0,1,0,1], [1,0,1,0,1,0,1]],
+    possiblePlatformArrangement = [[1,1,1,1,1,1,1,1,1,1]], // [1,1,1,0,1,1,1], [1,0,1,0,1,1], [1,1,0,1,0,1], [1,0,1,0,1,0,1]
     // On which platform to stop player jumping out of frame
-    jumpUntilPlatformIndex = 1,
+    jumpUntilPlatformIndex = parseInt(numbPlatforms / 4),
     // Player movement speed
-    speed = 20;
+    speed = 10;
 
 //Variables for the game
 var platforms,
@@ -63,7 +63,7 @@ var platforms,
     currentPlatformArrangement;
 
 // Player object
-var isJumping = false;
+var playerJump = false;
 var nextPlayerX, nextPlayerY;
 // Player position that is left to change
 var xChange, yChange, framesLeft;
@@ -83,37 +83,17 @@ var Player = function() {
 		} catch (e) {}
 	};
 
-    this.jumpOnePlatform = function() {
+    this.jumpPlatform = function(numberOfPlatforms) {
         console.log('Jump one platform');
         // Calculate nex player position coordinates
-        nextPlayerX = player.x + platformWidth;
-        nextPlayerY = player.y - platformHeightDifference;
+        nextPlayerX = player.x + numberOfPlatforms * platformWidth;
+        nextPlayerY = player.y - numberOfPlatforms * platformHeightDifference;
         // How much will player actually move each frame
-        xChange = platformWidth / speed;
-        yChange = platformHeightDifference * 2 / speed;
+        xChange = platformWidth * numberOfPlatforms / speed;
+        yChange = platformHeightDifference * 2 * numberOfPlatforms / speed;
         framesLeft = speed;
         // Stop the player on first platform to avoid jumping out of frame
-        isJumping = true;
-//        if (currentPlatformIndex++ < jumpUntilPlatformIndex) {
-//            player.x += player.width;
-//            player.y -= platformHeightDifference;
-//            return;
-//        }
-//        // Move platforms on each jump to the left
-//        platforms.forEach(function(p, i) {
-//            p.x -= player.width;
-//            p.y += platformHeightDifference;
-//        });
-//        // Remove first platform
-//        platforms.shift();
-//        // Add next one
-//        platforms.push(new Platform(numbPlatforms-1, currentPlatformArrangement.pop()));
-    };
-
-    this.jumpTwoPlatforms = function() {
-        console.log('Jump two platforms');
-//        this.jumpOnePlatform();
-//        this.jumpOnePlatform();
+        playerJump = true;
     };
 };
 
@@ -146,33 +126,42 @@ function Platform(index, type) {
 function init() {
 	//Player related calculations and functions
 	function playerCalculation() {
-        if (isJumping && framesLeft > 0) {
-            if (framesLeft < parseInt(speed / 3)) {
-                // Fall down
-                player.y += yChange;
+        if (framesLeft > 0) {
+            if (jumpUntilPlatformIndex == 0) {
+                // Move platforms on each jump to the left
+                platforms.forEach(function(p, i) {
+                    p.x -= xChange;
+                    p.y += yChange/2;
+                });
             } else {
+                // Fall down
+                if (framesLeft < parseInt(speed / 3)) { player.y += yChange; }
                 // Jump up
-                player.y -= yChange;
+                else { player.y -= yChange; }
+                player.x += xChange;
             }
-            player.x += xChange;
             framesLeft --;
-        } else if (isJumping) {
+        } else if (playerJump) {
             // Fix current user position if necessary
-            if (player.y != nextPlayerY) player.y = nextPlayerY;
-            if (player.x != nextPlayerX) player.x = nextPlayerX;
-            isJumping = false;
+            if (jumpUntilPlatformIndex > 0) {
+                console.log('Player moved');
+                if (player.y != nextPlayerY) player.y = nextPlayerY;
+                if (player.x != nextPlayerX) player.x = nextPlayerX;
+                jumpUntilPlatformIndex --;
+            } else {
+               // Remove first platform
+                platforms.shift();
+                // Add next one
+                platforms.push(new Platform(numbPlatforms-1, currentPlatformArrangement.pop()));
+            }
+            playerJump = false;
         }
 
-        // If next platform types are empty, randomly select one from possiblePlatformArrangement list
-        if (currentPlatformArrangement.length == 0) {
-            var index = (Math.random()*(possiblePlatformArrangement.length - 1)).toFixed(0);
-            currentPlatformArrangement = (possiblePlatformArrangement[index]).clone();
-        }
 		//Adding keyboard controls
 		document.onkeydown = function(e) {
             switch (e.keyCode) {
-                case 39: player.jumpOnePlatform(); break;
-                case 37: player.jumpTwoPlatforms();
+                case 39: player.jumpPlatform(1); break;
+                case 37: player.jumpPlatform(2);
             }
 		};
         player.draw();
@@ -195,6 +184,12 @@ function init() {
         if (platforms[jumpUntilPlatformIndex].type == 0) {
             player.isDead = true;
             gameOver();
+        }
+
+        // If next platform types are empty, randomly select one from possiblePlatformArrangement list
+        if (currentPlatformArrangement.length == 0) {
+            var index = (Math.random()*(possiblePlatformArrangement.length - 1)).toFixed(0);
+            currentPlatformArrangement = (possiblePlatformArrangement[index]).clone();
         }
 
         // Update score
