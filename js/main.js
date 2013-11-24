@@ -49,11 +49,11 @@ var numbPlatforms = 5,
     // Width of each platform and of player
     platformWidth = width / numbPlatforms,
     // Possible platform arrangements
-    possiblePlatformArrangement = [[1,1,1,1,1,1,1,1,1,1]], // [1,1,1,0,1,1,1], [1,0,1,0,1,1], [1,1,0,1,0,1], [1,0,1,0,1,0,1]
+    possiblePlatformArrangement = [[1,1,1,1]],//[[1,1,1,0,1,1,1], [1,0,1,0,1,1], [1,1,0,1,0,1], [1,0,1,0,1,0,1]];
     // On which platform to stop player jumping out of frame
     jumpUntilPlatformIndex = parseInt(numbPlatforms / 4),
     // Player movement speed
-    speed = 10;
+    speed = 20;
 
 //Variables for the game
 var platforms,
@@ -63,7 +63,7 @@ var platforms,
     currentPlatformArrangement;
 
 // Player object
-var playerJump = false;
+var playerJump = 0;
 var nextPlayerX, nextPlayerY;
 // Player position that is left to change
 var xChange, yChange, framesLeft;
@@ -84,8 +84,12 @@ var Player = function() {
 	};
 
     this.jumpPlatform = function(numberOfPlatforms) {
+        // Create new platforms
+        for (var i = numberOfPlatforms; i > 0; i--){
+            platforms.push(new Platform(numbPlatforms + i-1, currentPlatformArrangement.pop()));
+        }
         console.log('Jump one platform');
-        // Calculate nex player position coordinates
+        // Calculate next player position coordinates
         nextPlayerX = player.x + numberOfPlatforms * platformWidth;
         nextPlayerY = player.y - numberOfPlatforms * platformHeightDifference;
         // How much will player actually move each frame
@@ -93,7 +97,7 @@ var Player = function() {
         yChange = platformHeightDifference * 2 * numberOfPlatforms / speed;
         framesLeft = speed;
         // Stop the player on first platform to avoid jumping out of frame
-        playerJump = true;
+        playerJump = numberOfPlatforms;
     };
 };
 
@@ -128,10 +132,11 @@ function init() {
 	function playerCalculation() {
         if (framesLeft > 0) {
             if (jumpUntilPlatformIndex == 0) {
-                // Move platforms on each jump to the left
+                // Move platforms on each jump to the left and down
                 platforms.forEach(function(p, i) {
+                    if (framesLeft < parseInt(speed / 3)) { p.y -= yChange; }
+                    else { p.y += yChange; }
                     p.x -= xChange;
-                    p.y += yChange/2;
                 });
             } else {
                 // Fall down
@@ -141,20 +146,17 @@ function init() {
                 player.x += xChange;
             }
             framesLeft --;
-        } else if (playerJump) {
+        } else if (playerJump > 0) {
             // Fix current user position if necessary
             if (jumpUntilPlatformIndex > 0) {
                 console.log('Player moved');
                 if (player.y != nextPlayerY) player.y = nextPlayerY;
                 if (player.x != nextPlayerX) player.x = nextPlayerX;
                 jumpUntilPlatformIndex --;
-            } else {
-               // Remove first platform
-                platforms.shift();
-                // Add next one
-                platforms.push(new Platform(numbPlatforms-1, currentPlatformArrangement.pop()));
             }
-            playerJump = false;
+            // Remove old platforms
+            while (platforms.length > numbPlatforms + 2) { platforms.shift(); }
+            playerJump = 0;
         }
 
 		//Adding keyboard controls
