@@ -7,28 +7,12 @@ window.requestAnimFrame = (function() {
 })();
 // Prototype functions
 Array.prototype.clone = function() { return this.slice(0); };
-
-// Frames per seconds
-var fps = {
-    current: 0,
-    last: 0,
-    lastUpdated: Date.now(),
-    draw: function() {
-        ctx.fillStyle = '#fff';
-        ctx.fillRect(0, 0, 100, 25);
-        ctx.font = '12pt Arial';
-        ctx.fillStyle = '#000';
-        ctx.textBaseline = 'top';
-        ctx.fillText(fps.last + 'fps', 5, 5);
-    },
-    update: function() {
-        fps.current ++;
-        if (Date.now() - fps.lastUpdated >= 1000) {
-            fps.last = fps.current;
-            fps.current = 0;
-            fps.lastUpdated = Date.now();
-        }
+String.prototype.format = function() {
+    var f = this;
+    for (var i = 0; i < arguments.length; i++) {
+        f = f.replace(new RegExp('\\{'+i+'\\}', 'gi'), arguments[i]);
     }
+    return f;
 };
 
 // Height and width of canvas
@@ -86,6 +70,7 @@ var Player = function() {
 	};
 
     this.jumpPlatform = function(numberOfPlatforms) {
+        console.log('Jumping {0} platforms'.format(numberOfPlatforms));
         // Create new platforms
         if (platformNumbToJump == 0) {
             for (var i = 0; i < numberOfPlatforms; i++){
@@ -95,11 +80,12 @@ var Player = function() {
             }
         }
 
-        console.log('Jump one platform');
         // How much will player actually move each frame
         xChange = player.moveX * numberOfPlatforms;
         yChange = player.moveY * numberOfPlatforms;
         framesLeft = speed;
+
+        currentPlatformIndex += numberOfPlatforms;
     };
 };
 
@@ -212,7 +198,6 @@ function init() {
         // Update score
         var scoreText = document.getElementById('score');
         scoreText.innerHTML = currentPlatformIndex.toString();
-        fps.update();
 	}
 
 	function animloop() {
@@ -224,7 +209,6 @@ function init() {
             });
         }
 		update();
-        fps.draw();
 		requestAnimFrame(animloop);
 	}
     animloop();
