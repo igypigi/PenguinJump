@@ -53,7 +53,8 @@ var numbPlatforms = 5,
     // On which platform to stop player jumping out of frame
     jumpUntilPlatformIndex = parseInt(numbPlatforms / 4),
     // Player movement speed
-    speed = 20;
+    speed = 20,
+    platformsInCache = 10;
 
 //Variables for the game
 var platforms,
@@ -62,11 +63,8 @@ var platforms,
     currentPlatformIndex,
     currentPlatformArrangement;
 
-// Player object
-var playerJump = 0;
-var nextPlayerX, nextPlayerY;
 // Player position that is left to change
-var xChange, yChange, framesLeft;
+var xChange, yChange, framesLeft, platformNumbToJump = jumpUntilPlatformIndex;
 var Player = function() {
 	this.isDead = false;
     // Player object size (square)
@@ -75,6 +73,10 @@ var Player = function() {
     // Player position
 	this.x = 0;
 	this.y = startPosition - this.height;
+
+    // Player changes per one jump
+    this.moveX = platformWidth / speed;
+    this.moveY = platformHeightDifference * 2 / speed;
 
 	//Function to draw it
 	this.draw = function() {
@@ -85,19 +87,19 @@ var Player = function() {
 
     this.jumpPlatform = function(numberOfPlatforms) {
         // Create new platforms
-        for (var i = numberOfPlatforms; i > 0; i--){
-            platforms.push(new Platform(numbPlatforms + i-1, currentPlatformArrangement.pop()));
+        if (platformNumbToJump == 0) {
+            for (var i = 0; i < numberOfPlatforms; i++){
+                platforms.push(
+                    new Platform(numbPlatforms + i, currentPlatformArrangement.pop())
+                );
+            }
         }
+
         console.log('Jump one platform');
-        // Calculate next player position coordinates
-        nextPlayerX = player.x + numberOfPlatforms * platformWidth;
-        nextPlayerY = player.y - numberOfPlatforms * platformHeightDifference;
         // How much will player actually move each frame
-        xChange = platformWidth * numberOfPlatforms / speed;
-        yChange = platformHeightDifference * 2 * numberOfPlatforms / speed;
+        xChange = player.moveX * numberOfPlatforms;
+        yChange = player.moveY * numberOfPlatforms;
         framesLeft = speed;
-        // Stop the player on first platform to avoid jumping out of frame
-        playerJump = numberOfPlatforms;
     };
 };
 
@@ -131,7 +133,7 @@ function init() {
 	//Player related calculations and functions
 	function playerCalculation() {
         if (framesLeft > 0) {
-            if (jumpUntilPlatformIndex == 0) {
+            if (platformNumbToJump == 0) {
                 // Move platforms on each jump to the left and down
                 platforms.forEach(function(p, i) {
                     if (framesLeft < parseInt(speed / 3)) { p.y -= yChange; }
@@ -146,17 +148,12 @@ function init() {
                 player.x += xChange;
             }
             framesLeft --;
-        } else if (playerJump > 0) {
-            // Fix current user position if necessary
-            if (jumpUntilPlatformIndex > 0) {
-                console.log('Player moved');
-                if (player.y != nextPlayerY) player.y = nextPlayerY;
-                if (player.x != nextPlayerX) player.x = nextPlayerX;
-                jumpUntilPlatformIndex --;
-            }
+        } else if (framesLeft == 0) {
+            // Fix user and platforms positions if necessary (in case of variations)
+            fixPositions();
             // Remove old platforms
-            while (platforms.length > numbPlatforms + 2) { platforms.shift(); }
-            playerJump = 0;
+            while (platforms.length > platformsInCache) { platforms.shift(); }
+            framesLeft = -1;
         }
 
 		//Adding keyboard controls
@@ -168,6 +165,24 @@ function init() {
 		};
         player.draw();
 	}
+
+    function fixPositions () {
+        // Fix player position else platforms
+        if (platformNumbToJump > 0) {
+            player.x = platformWidth * jumpUntilPlatformIndex;
+            player.y = startPosition - jumpUntilPlatformIndex * (platformHeightDifference) - player.height;
+            platformNumbToJump --;
+        } else {
+            var index = 0;
+            platforms.forEach(function(p, i) {
+                // Skip platforms that are out of the frame
+                if (i < platforms.length - numbPlatforms) return;
+                p.x = platformWidth * index;
+                p.y = startPosition - parseInt(platformHeightDifference) * index;
+                index ++;
+            });
+        }
+    }
 
 	//Function to update everything
 	function update() {
