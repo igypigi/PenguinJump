@@ -38,6 +38,9 @@ var numbPlatforms = 5,
     jumpUntilPlatformIndex = parseInt(numbPlatforms / 4),
     // Player movement speed
     speed = 20,
+    // Seconds to give the player
+    startSeconds = 1000 * 20;
+    // Platforms to leave in cache
     platformsInCache = 10;
 
 //Variables for the game
@@ -223,6 +226,18 @@ function hideScoreBoard() {
     document.getElementById('scoreBoard').style.zIndex = -1;
 }
 
+// --------------------------- Stopwatch ---------------------------
+var millisecondsLeft, seconds, countDownInterval;
+function CountDown () {
+	millisecondsLeft -= 100;
+    if (millisecondsLeft <= 0) {
+        player.isDead = true;
+        clearInterval(countDownInterval);
+    }
+    seconds = parseInt(millisecondsLeft / 1000);
+	document.getElementById('stopwatch').innerHTML = (seconds < 10 ? '0' : '') + seconds + ':' + millisecondsLeft % 1000 / 100;
+}
+
 function newGame() {
     // Reset or variables
     player = new Player();
@@ -230,6 +245,8 @@ function newGame() {
     for (var i = 0; i < numbPlatforms; i++) platforms.push(new Platform(i, 1));
     currentPlatformIndex = 0;
     currentPlatformArrangement = [];
+    millisecondsLeft = startSeconds;
+    countDownInterval = setInterval(CountDown, 100);
     showScoreBoard();
     hideMenu();
     init();
@@ -252,7 +269,7 @@ function gameOver() {
     hideScoreBoard();
     hideMenu();
 	document.getElementById('gameOverMenu').style.zIndex = 1;
-	document.getElementById('gameOverScore').innerHTML = 'You scored ' + currentPlatformIndex + ' points!';
+	document.getElementById('gameOverScore').innerHTML = 'You scored {0} points!'.format(currentPlatformIndex);
 }
 
 function menuLoop() {
