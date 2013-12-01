@@ -5,6 +5,7 @@ window.requestAnimFrame = (function() {
 		window.setTimeout(callback, 1000 / 60);
 	};
 })();
+
 // Prototype functions
 Array.prototype.clone = function() { return this.slice(0); };
 String.prototype.format = function() {
@@ -26,32 +27,23 @@ canvas.height = height;
 // Settings for the game
 // Number of platforms per frame
 var numbPlatforms = 5,
-    // Difference in height between two platforms
-    platformHeightDifference = (height / 2 / numbPlatforms).toFixed(0),
+    // Player movement speed
+    speed = 20,
+    // Seconds to give the player
+    startSeconds = 1000 * 200;
     // Player start position == Padding from bottom
     startPosition = height - 100,
+    // Difference in height between two platforms
+    platformHeightDifference = (height / 2 / numbPlatforms).toFixed(0),
     // Width of each platform and of player
     platformWidth = width / numbPlatforms,
     // Possible platform arrangements
     possiblePlatformArrangement = [[1,1,1,1]],//[[1,1,1,0,1,1,1], [1,0,1,0,1,1], [1,1,0,1,0,1], [1,0,1,0,1,0,1]];
     // On which platform to stop player jumping out of frame
-    jumpUntilPlatformIndex = parseInt(numbPlatforms / 4),
-    // Player movement speed
-    speed = 20,
-    // Seconds to give the player
-    startSeconds = 1000 * 20;
-    // Platforms to leave in cache
-    platformsInCache = 10;
-
-//Variables for the game
-var platforms,
-	player,
-    // Index number of the platform the player is currently on
-    currentPlatformIndex,
-    currentPlatformArrangement;
+    jumpUntilPlatformIndex = parseInt(numbPlatforms / 4);
 
 // Player position that is left to change
-var xChange, yChange, framesLeft, platformNumbToJump = jumpUntilPlatformIndex;
+var player, xChange, yChange, framesLeft, platformNumbToJump = jumpUntilPlatformIndex;
 var Player = function() {
 	this.isDead = false;
     // Player object size (square)
@@ -78,7 +70,7 @@ var Player = function() {
         if (platformNumbToJump == 0) {
             for (var i = 0; i < numberOfPlatforms; i++){
                 platforms.push(
-                    new Platform(numbPlatforms + i, currentPlatformArrangement.pop())
+                    new Platform(currentPlatformArrangement.pop())
                 );
             }
         }
@@ -90,15 +82,27 @@ var Player = function() {
 
         currentPlatformIndex += numberOfPlatforms;
     };
+
+    this.move = function() {
+        // Fall down
+        if (framesLeft < parseInt(speed / 3)) { this.y += yChange; }
+        // Jump up
+        else { this.y -= yChange; }
+        this.x += xChange;
+    }
 };
 
 //Platform class
-function Platform(index, type) {
+var platforms,
+    // Index number of the platform the player is currently on
+    currentPlatformIndex, currentPlatformArrangement;
+function Platform(type) {
     // Platform size
 	this.width = platformWidth;
 	this.height = height;
 
     // Platform position
+    var index = platforms.length;
 	this.x = index * this.width;
 	this.y = startPosition - index * platformHeightDifference;
 
@@ -116,6 +120,12 @@ function Platform(index, type) {
             ctx.fillRect(this.x, this.y, this.width, this.height);
 		} catch (e) {}
 	};
+
+    this.move = function() {
+        if (framesLeft < parseInt(speed / 3)) { this.y -= yChange; }
+        else { this.y += yChange; }
+        this.x -= xChange;
+    }
 }
 
 function init() {
@@ -124,24 +134,16 @@ function init() {
         if (framesLeft > 0) {
             if (platformNumbToJump == 0) {
                 // Move platforms on each jump to the left and down
-                platforms.forEach(function(p, i) {
-                    if (framesLeft < parseInt(speed / 3)) { p.y -= yChange; }
-                    else { p.y += yChange; }
-                    p.x -= xChange;
-                });
+                platforms.forEach(function(p) { p.move(); });
             } else {
-                // Fall down
-                if (framesLeft < parseInt(speed / 3)) { player.y += yChange; }
-                // Jump up
-                else { player.y -= yChange; }
-                player.x += xChange;
+                player.move();
             }
             framesLeft --;
         } else if (framesLeft == 0) {
             // Fix user and platforms positions if necessary (in case of variations)
             fixPositions();
             // Remove old platforms
-            while (platforms.length > platformsInCache) { platforms.shift(); }
+            while (platforms.length > numbPlatforms) { platforms.shift(); }
             framesLeft = -1;
         }
 
@@ -187,7 +189,7 @@ function init() {
         playerCalculation();
 
         // Is platform empty
-        if (platforms[jumpUntilPlatformIndex].type == 0) {
+        if (platforms[jumpUntilPlatformIndex].type == 0 || millisecondsLeft <= 0) {
             player.isDead = true;
             gameOver();
         }
@@ -230,19 +232,15 @@ function hideScoreBoard() {
 var millisecondsLeft, seconds, countDownInterval;
 function CountDown () {
 	millisecondsLeft -= 100;
-    if (millisecondsLeft <= 0) {
-        player.isDead = true;
-        clearInterval(countDownInterval);
-    }
     seconds = parseInt(millisecondsLeft / 1000);
 	document.getElementById('stopwatch').innerHTML = (seconds < 10 ? '0' : '') + seconds + ':' + millisecondsLeft % 1000 / 100;
 }
 
 function newGame() {
-    // Reset or variables
+    // Reset all variables
     player = new Player();
     platforms = [];
-    for (var i = 0; i < numbPlatforms; i++) platforms.push(new Platform(i, 1));
+    for (var i = 0; i < numbPlatforms; i++) platforms.push(new Platform(1));
     currentPlatformIndex = 0;
     currentPlatformArrangement = [];
     millisecondsLeft = startSeconds;
