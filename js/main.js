@@ -28,7 +28,7 @@ canvas.height = height;
 // Number of platforms per frame
 var numbPlatforms = 5,
     // Player movement speed
-    speed = 20,
+    speed = 16,
     // Seconds to give the player
     startSeconds = 1000 * 200;
     // Player start position == Padding from bottom
@@ -69,12 +69,9 @@ var Player = function() {
         // Create new platforms
         if (platformNumbToJump == 0) {
             for (var i = 0; i < numberOfPlatforms; i++){
-                platforms.push(
-                    new Platform(currentPlatformArrangement.pop())
-                );
+                platforms.push(new Platform(currentPlatformArrangement.pop()));
             }
         }
-
         // How much will player actually move each frame
         xChange = player.moveX * numberOfPlatforms;
         yChange = player.moveY * numberOfPlatforms;
@@ -89,7 +86,7 @@ var Player = function() {
         // Jump up
         else { this.y -= yChange; }
         this.x += xChange;
-    }
+    };
 };
 
 //Platform class
@@ -97,6 +94,9 @@ var platforms,
     // Index number of the platform the player is currently on
     currentPlatformIndex, currentPlatformArrangement;
 function Platform(type) {
+    // Platform type: 0->Empty, 1->Full
+    this.type = type;
+
     // Platform size
 	this.width = platformWidth;
 	this.height = height;
@@ -106,8 +106,6 @@ function Platform(type) {
 	this.x = index * this.width;
 	this.y = startPosition - index * platformHeightDifference;
 
-    // Platform type: 0->Empty, 1->Full
-    this.type = type;
     switch (this.type) {
         case 0: this.color = 'rgba(0,0,0,0.0)'; break;
         case 1: this.color = '#' + Math.random().toString(16).substr(-6);
@@ -121,11 +119,43 @@ function Platform(type) {
 		} catch (e) {}
 	};
 
+    this.object = null;
+    this.hasObject = false;
+    // Add object to platform
+    this.addObject = function(type) {
+        this.object = new Object(this, type);
+        this.hasObject = true;
+    };
+
     this.move = function() {
-        if (framesLeft < parseInt(speed / 3)) { this.y -= yChange; }
-        else { this.y += yChange; }
+        if (framesLeft < parseInt(speed / 3)) {
+            this.y -= yChange;
+            if (this.hasObject) this.object.y -= yChange;
+        } else {
+            this.y += yChange;
+            if (this.hasObject) this.object.y += yChange;
+        }
         this.x -= xChange;
-    }
+        if (this.hasObject) this.object.x -= xChange;
+    };
+}
+
+// Object class
+function Object(platform, type) {
+    // Types: 0->clock
+    this.type = type;
+    if (type == 0) this.image = 'stopwatch2';
+    this.width = platformWidth - 20;
+    this.height = 40;
+
+    this.x = platform.x + 10;
+    this.y = platform.y - this.height;
+
+    this.draw = function() {
+		try {
+            ctx.drawImage(document.getElementById(this.image), this.x, this.y, this.width, this.height);
+		} catch (e) {}
+	};
 }
 
 function init() {
@@ -181,8 +211,9 @@ function init() {
         ctx.clearRect(0, 0, width, height);
 
         // Draw platforms
-        platforms.forEach(function(p, i) {
+        platforms.forEach(function(p) {
             p.draw();
+            if (p.hasObject) p.object.draw();
         });
 
         // Draw player
@@ -241,6 +272,7 @@ function newGame() {
     player = new Player();
     platforms = [];
     for (var i = 0; i < numbPlatforms; i++) platforms.push(new Platform(1));
+    platforms[2].addObject(0);
     currentPlatformIndex = 0;
     currentPlatformArrangement = [];
     millisecondsLeft = startSeconds;
