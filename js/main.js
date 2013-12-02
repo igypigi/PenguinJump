@@ -30,7 +30,7 @@ var numbPlatforms = 5,
     // Player movement speed
     speed = 16,
     // Seconds to give the player
-    startSeconds = 1000 * 200;
+    startSeconds = 1000 * 20;
     // Player start position == Padding from bottom
     startPosition = height - 100,
     // Difference in height between two platforms
@@ -38,12 +38,16 @@ var numbPlatforms = 5,
     // Width of each platform and of player
     platformWidth = width / numbPlatforms,
     // Possible platform arrangements
-    possiblePlatformArrangement = [[1,1,1,1]],//[[1,1,1,0,1,1,1], [1,0,1,0,1,1], [1,1,0,1,0,1], [1,0,1,0,1,0,1]];
+    possiblePlatformArrangement = [[1,1,1,0,1,1,1], [1,0,1,0,1,1], [1,1,0,1,0,1], [1,0,1,0,1,0,1]];
     // On which platform to stop player jumping out of frame
-    jumpUntilPlatformIndex = parseInt(numbPlatforms / 4);
+    jumpUntilPlatformIndex = parseInt(numbPlatforms / 4),
+    minNumbOfPlatformsBeetweenClocks = 4,
+    maxNumbOfPlatformsBeetweenClocks = 12;
 
 // Player position that is left to change
-var player, xChange, yChange, framesLeft, platformNumbToJump = jumpUntilPlatformIndex;
+var player, xChange, yChange, framesLeft = -1, platformNumbToJump = jumpUntilPlatformIndex,
+    // When was the last clock added
+    lastClock = minNumbOfPlatformsBeetweenClocks;
 var Player = function() {
 	this.isDead = false;
     // Player object size (square)
@@ -65,19 +69,35 @@ var Player = function() {
 	};
 
     this.jumpPlatform = function(numberOfPlatforms) {
-        console.log('Jumping {0} platforms'.format(numberOfPlatforms));
-        // Create new platforms
-        if (platformNumbToJump == 0) {
-            for (var i = 0; i < numberOfPlatforms; i++){
-                platforms.push(new Platform(currentPlatformArrangement.pop()));
-            }
-        }
-        // How much will player actually move each frame
-        xChange = player.moveX * numberOfPlatforms;
-        yChange = player.moveY * numberOfPlatforms;
-        framesLeft = speed;
+        // Jump only if not already jumping
+        if (framesLeft == -1) {
+            console.log('Jumping {0} platforms'.format(numberOfPlatforms));
+            // Create new platforms
+            if (platformNumbToJump == 0) {
+                for (var i = 0; i < numberOfPlatforms; i++) {
+                    var newPlatform = new Platform(currentPlatformArrangement.pop());
+                    platforms.push(newPlatform);
 
-        currentPlatformIndex += numberOfPlatforms;
+                    // Add clock only if platform type is 1
+                    if (newPlatform.type == 1 && lastClock > minNumbOfPlatformsBeetweenClocks) {
+                        // If max reached add clock, else random
+                        if (lastClock >= maxNumbOfPlatformsBeetweenClocks || Math.random() > 0.5) {
+                            continue;
+                        }
+                        console.log('Adding clock with value 2');
+                        newPlatform.addObject(2);
+                        lastClock = 0;
+                    }
+                    lastClock += 1;
+                }
+            }
+            // How much will player actually move each frame
+            xChange = player.moveX * numberOfPlatforms;
+            yChange = player.moveY * numberOfPlatforms;
+            framesLeft = speed;
+
+            currentPlatformIndex += numberOfPlatforms;
+        }
     };
 
     this.move = function() {
@@ -142,9 +162,9 @@ function Platform(type) {
 
 // Object class
 function Object(platform, type) {
-    // Types: 0->clock
+    // Types: 2->+2 seconds
     this.type = type;
-    if (type == 0) this.image = 'stopwatch2';
+    if (type == 2) this.image = 'stopwatch2';
     this.width = platformWidth - 20;
     this.height = 40;
 
@@ -177,13 +197,14 @@ function init() {
             framesLeft = -1;
         }
 
-		//Adding keyboard controls
-		document.onkeydown = function(e) {
+        //Adding keyboard controls
+        document.onkeydown = function(e) {
             switch (e.keyCode) {
                 case 39: player.jumpPlatform(1); break;
                 case 37: player.jumpPlatform(2);
             }
-		};
+        };
+
         player.draw();
 	}
 
@@ -223,6 +244,11 @@ function init() {
         if (platforms[jumpUntilPlatformIndex].type == 0 || millisecondsLeft <= 0) {
             player.isDead = true;
             gameOver();
+        } else if (platforms[jumpUntilPlatformIndex].hasObject) {
+            console.log('Picked object, adding {0} seconds.'.format(platforms[jumpUntilPlatformIndex].object.type));
+            // If platforms has a clock object add time to player
+            millisecondsLeft += 1000 * platforms[jumpUntilPlatformIndex].object.type;
+            platforms[jumpUntilPlatformIndex].hasObject = false;
         }
 
         // If next platform types are empty, randomly select one from possiblePlatformArrangement list
@@ -272,7 +298,6 @@ function newGame() {
     player = new Player();
     platforms = [];
     for (var i = 0; i < numbPlatforms; i++) platforms.push(new Platform(1));
-    platforms[2].addObject(0);
     currentPlatformIndex = 0;
     currentPlatformArrangement = [];
     millisecondsLeft = startSeconds;
