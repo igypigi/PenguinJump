@@ -30,7 +30,7 @@ var numbPlatforms = 5,
     // Player movement speed
     speed = 16,
     // Seconds to give the player
-    startSeconds = 1000 * 20;
+    startSeconds = 1000 * 200;
     // Player start position == Padding from bottom
     startPosition = height - 100,
     // Difference in height between two platforms
@@ -65,7 +65,9 @@ var Player = function() {
 	this.draw = function() {
 		try {
             ctx.drawImage(document.getElementById('player'), this.x, this.y, this.width, this.height);
-		} catch (e) {}
+		} catch (e) {
+            console.log(e);
+        }
 	};
 
     this.jumpPlatform = function(numberOfPlatforms) {
@@ -114,6 +116,7 @@ var platforms,
     // Index number of the platform the player is currently on
     currentPlatformIndex, currentPlatformArrangement;
 function Platform(type) {
+    console.log('New platform');
     // Platform type: 0->Empty, 1->Full
     this.type = type;
 
@@ -136,7 +139,9 @@ function Platform(type) {
 		try {
             ctx.fillStyle = this.color;
             ctx.fillRect(this.x, this.y, this.width, this.height);
-		} catch (e) {}
+		} catch (e) {
+            console.log(e);
+        }
 	};
 
     this.object = null;
@@ -174,7 +179,9 @@ function Object(platform, type) {
     this.draw = function() {
 		try {
             ctx.drawImage(document.getElementById(this.image), this.x, this.y, this.width, this.height);
-		} catch (e) {}
+		} catch (e) {
+            console.log(e);
+        }
 	};
 }
 
@@ -182,6 +189,7 @@ function init() {
 	//Player related calculations and functions
 	function playerCalculation() {
         if (framesLeft > 0) {
+            console.log('Moving platforms/player');
             if (platformNumbToJump == 0) {
                 // Move platforms on each jump to the left and down
                 platforms.forEach(function(p) { p.move(); });
@@ -190,11 +198,13 @@ function init() {
             }
             framesLeft --;
         } else if (framesLeft == 0) {
+            console.log('Jump completed');
             // Fix user and platforms positions if necessary (in case of variations)
             fixPositions();
             // Remove old platforms
-            while (platforms.length > numbPlatforms) { platforms.shift(); }
+            while (platforms.length > numbPlatforms) { console.log('Removing platform'); platforms.shift(); }
             framesLeft = -1;
+            console.log('-------------------------');
         }
 
         //Adding keyboard controls
@@ -209,6 +219,7 @@ function init() {
 	}
 
     function fixPositions () {
+        console.log('Fixing position');
         // Fix player position else platforms
         if (platformNumbToJump > 0) {
             player.x = platformWidth * jumpUntilPlatformIndex;
