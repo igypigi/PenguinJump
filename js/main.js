@@ -77,6 +77,13 @@ var Player = function() {
             // Create new platforms
             if (platformNumbToJump == 0) {
                 for (var i = 0; i < numberOfPlatforms; i++) {
+
+                    // If next platform types are empty, randomly select one from possiblePlatformArrangement list
+                    if (currentPlatformArrangement.length == 0) {
+                        var index = (Math.random()*(possiblePlatformArrangement.length - 1)).toFixed(0);
+                        currentPlatformArrangement = (possiblePlatformArrangement[index]).clone();
+                    }
+
                     var newPlatform = new Platform(currentPlatformArrangement.pop());
                     platforms.push(newPlatform);
 
@@ -103,6 +110,7 @@ var Player = function() {
     };
 
     this.move = function() {
+        console.log('Moving player.');
         // Fall down
         if (framesLeft < parseInt(speed / 3)) { this.y += yChange; }
         // Jump up
@@ -153,6 +161,7 @@ function Platform(type) {
     };
 
     this.move = function() {
+        console.log('Moving platforms.');
         if (framesLeft < parseInt(speed / 3)) {
             this.y -= yChange;
             if (this.hasObject) this.object.y -= yChange;
@@ -189,7 +198,6 @@ function init() {
 	//Player related calculations and functions
 	function playerCalculation() {
         if (framesLeft > 0) {
-            console.log('Moving platforms/player');
             if (platformNumbToJump == 0) {
                 // Move platforms on each jump to the left and down
                 platforms.forEach(function(p) { p.move(); });
@@ -199,10 +207,12 @@ function init() {
             framesLeft --;
         } else if (framesLeft == 0) {
             console.log('Jump completed');
-            // Fix user and platforms positions if necessary (in case of variations)
-            fixPositions();
+
             // Remove old platforms
             while (platforms.length > numbPlatforms) { console.log('Removing platform'); platforms.shift(); }
+            // Fix user and platforms positions if necessary (in case of variations)
+            fixPositions();
+
             framesLeft = -1;
             console.log('-------------------------');
         }
@@ -260,12 +270,6 @@ function init() {
             // If platforms has a clock object add time to player
             millisecondsLeft += 1000 * platforms[jumpUntilPlatformIndex].object.type;
             platforms[jumpUntilPlatformIndex].hasObject = false;
-        }
-
-        // If next platform types are empty, randomly select one from possiblePlatformArrangement list
-        if (currentPlatformArrangement.length == 0) {
-            var index = (Math.random()*(possiblePlatformArrangement.length - 1)).toFixed(0);
-            currentPlatformArrangement = (possiblePlatformArrangement[index]).clone();
         }
 
         // Update score
