@@ -27,6 +27,7 @@ canvas.height = height;
 // Settings for the game
 // Number of platforms per frame
 var numbPlatforms = 5,
+    numbLevels = 3;
     // Player movement speed
     speed = 16,
     // Seconds to give the player
@@ -42,7 +43,8 @@ var numbPlatforms = 5,
     // On which platform to stop player jumping out of frame
     jumpUntilPlatformIndex = parseInt(numbPlatforms / 4),
     minNumbOfPlatformsBeetweenClocks = 4,
-    maxNumbOfPlatformsBeetweenClocks = 12;
+    maxNumbOfPlatformsBeetweenClocks = 12,
+    numberOfPlatformImages = 4;
 
 // Player position that is left to change
 var player, xChange, yChange, framesLeft = -1, platformNumbToJump = jumpUntilPlatformIndex,
@@ -122,7 +124,7 @@ var Player = function() {
 //Platform class
 var platforms,
     // Index number of the platform the player is currently on
-    currentPlatformIndex, currentPlatformArrangement;
+    currentPlatformIndex = 1, currentPlatformArrangement, currentPlatformNumber = 0;
 function Platform(type) {
     console.log('New platform');
     // Platform type: 0->Empty, 1->Full
@@ -137,16 +139,19 @@ function Platform(type) {
 	this.x = index * this.width;
 	this.y = startPosition - index * platformHeightDifference;
 
-    switch (this.type) {
-        case 0: this.color = 'rgba(0,0,0,0.0)'; break;
-        case 1: this.color = '#' + Math.random().toString(16).substr(-6);
-    }
+    // currentLevel
+    var currentLevel = (parseInt(currentPlatformIndex) / 10).toFixed(0) % numbLevels + 1;
+
+    this.color = '{0}_platform_{1}'.format(currentLevel, currentPlatformNumber);
+    currentPlatformNumber ++;
+    if (currentPlatformNumber == numberOfPlatformImages) currentPlatformNumber = 0;
 
 	//Function to draw it
 	this.draw = function() {
 		try {
-            ctx.fillStyle = this.color;
-            ctx.fillRect(this.x, this.y, this.width, this.height);
+            if (type != 0) {
+                ctx.drawImage(document.getElementById(this.color), this.x, this.y, this.width, this.height);
+            }
 		} catch (e) {
             console.log(e);
         }
@@ -313,7 +318,7 @@ function newGame() {
     player = new Player();
     platforms = [];
     for (var i = 0; i < numbPlatforms; i++) platforms.push(new Platform(1));
-    currentPlatformIndex = 0;
+    currentPlatformIndex = 1;
     currentPlatformArrangement = [];
     millisecondsLeft = startSeconds;
     countDownInterval = setInterval(CountDown, 100);
