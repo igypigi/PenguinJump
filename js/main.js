@@ -17,10 +17,11 @@ String.prototype.format = function() {
 };
 
 // Height and width of canvas
+var width = window.innerWidth,
+    height = window.innerHeight;
+
 var canvas = document.getElementById('canvas');
 var ctx = canvas.getContext('2d');
-var width = 420.0,
-    height = 560.0;
 canvas.width = width;
 canvas.height = height;
 
@@ -33,7 +34,7 @@ var numbPlatforms = 5,
     // Seconds to give the player
     startSeconds = 1000 * 20;
     // Player start position == Padding from bottom
-    startPosition = height - 100,
+    startPosition = height - 200,
     // Difference in height between two platforms
     platformHeightDifference = (height / 2 / numbPlatforms).toFixed(0),
     // Width of each platform and of player
@@ -41,11 +42,10 @@ var numbPlatforms = 5,
     // Possible platform arrangements
     possiblePlatformArrangement = [[1,1,1,0,1,1,1], [1,0,1,0,1,1], [1,1,0,1,0,1], [1,0,1,0,1,0,1]];
     // On which platform to stop player jumping out of frame
-    jumpUntilPlatformIndex = parseInt(numbPlatforms / 4),
+    jumpUntilPlatformIndex = 1,
     minNumbOfPlatformsBeetweenClocks = 4,
     maxNumbOfPlatformsBeetweenClocks = 12,
     numberOfPlatformImages = 4;
-
 
 var ocean;
 function Ocean () {
@@ -64,7 +64,7 @@ function Ocean () {
 }
 
 // Player position that is left to change
-var player, xChange, yChange, framesLeft = -1, platformNumbToJump = jumpUntilPlatformIndex;
+var player, xChange, yChange, framesLeft = -1, platformNumbToJump = jumpUntilPlatformIndex, buttonTwoDisabled;
 var Player = function() {
 	this.isDead = false;
     // Player object size (square)
@@ -230,14 +230,6 @@ function init() {
             framesLeft = -1;
         }
 
-        //Adding keyboard controls
-        document.onkeydown = function(e) {
-            switch (e.keyCode) {
-                case 39: player.jumpPlatform(1); break;
-                case 37: player.jumpPlatform(2);
-            }
-        };
-
         player.draw();
 	}
 
@@ -247,6 +239,11 @@ function init() {
             player.x = platformWidth * jumpUntilPlatformIndex;
             player.y = startPosition - jumpUntilPlatformIndex * (platformHeightDifference) - player.height;
             platformNumbToJump --;
+            // Start timer
+            countDownInterval = setInterval(CountDown, 100);
+            // Enable two jump button
+            buttonTwoDisabled = false;
+            document.getElementById('twoJump').style.background = 'rgba(0, 230, 0, 1.0)';
         } else {
             var index = 0;
             platforms.forEach(function(p, i) {
@@ -314,10 +311,12 @@ function init() {
 
 function showScoreBoard() {
     document.getElementById('scoreBoard').style.zIndex = 1;
+    document.getElementById('buttons').style.zIndex = 1;
 }
 
 function hideScoreBoard() {
     document.getElementById('scoreBoard').style.zIndex = -1;
+    document.getElementById('buttons').style.zIndex = -1;
 }
 
 // --------------------------- Stopwatch ---------------------------
@@ -329,10 +328,11 @@ function CountDown () {
 }
 
 function newGame() {
+    document.getElementById('twoJump').style.background = 'rgba(0, 230, 0, 0.2)';
     // Reset all variables
     player = new Player();
     ocean = new Ocean();
-
+    buttonTwoDisabled = true;
     currentPlatformIndex = 1;
     currentPlatformArrangement = [];
     millisecondsLeft = startSeconds;
@@ -340,7 +340,6 @@ function newGame() {
     currentPlatformNumber = 0;
     platforms = [];
     for (var i = 0; i < numbPlatforms; i++) platforms.push(new Platform(1));
-    countDownInterval = setInterval(CountDown, 100);
     showScoreBoard();
     hideMenu();
     init();
@@ -370,3 +369,16 @@ function menuLoop() {
 	requestAnimFrame(menuLoop);
 }
 menuLoop();
+
+function playerJump (steps) {
+    if (!player.isDead) {
+        if (parseInt(steps) === 2 && buttonTwoDisabled) {
+            return;
+        }
+        player.jumpPlatform(steps);
+    }
+}
+
+function restartCanvas () {
+    location.reload();
+}

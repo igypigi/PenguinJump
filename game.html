@@ -5,7 +5,7 @@
     <link rel="stylesheet" href="main.css">
 </head>
 
-<body>
+<body onresize="restartCanvas()">
 	<div class="container">
 		<canvas id="canvas">
 			Aww, your browser doesn't support HTML5!
@@ -29,7 +29,6 @@
 			<h3 id="gameOverScore">you scored 0 points</h3>
             <a class="button" href="javascript:showMenu()">Back to menu</a>
 		</div>
-		
 		<img id="player" class="hide" src="images/player.png"/>
         <img id="stopwatch2" class="hide" src="images/stopwatch2.png"/>
 
@@ -55,6 +54,11 @@
 			<p id="score">0</p>
             <p id="stopwatch">0</p>
 		</div>
+
+        <div id="buttons">
+            <div id="oneJump" onclick="playerJump(1)">One jump</div>
+            <div id="twoJump" onclick="playerJump(2)">Two jump</div>
+        </div>
 
 	</div>
     <script type="text/javascript" src="js/main.js"></script>
