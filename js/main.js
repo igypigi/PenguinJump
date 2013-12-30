@@ -31,7 +31,7 @@ var numbPlatforms = 5,
     // Player movement speed
     speed = 16,
     // Seconds to give the player
-    startSeconds = 1000 * 200;
+    startSeconds = 1000 * 20;
     // Player start position == Padding from bottom
     startPosition = height - 100,
     // Difference in height between two platforms
@@ -46,10 +46,25 @@ var numbPlatforms = 5,
     maxNumbOfPlatformsBeetweenClocks = 12,
     numberOfPlatformImages = 4;
 
+
+var ocean;
+function Ocean () {
+    this.width = width;
+    this.height = height*2;
+    this.x = 0;
+    this.y = height - 50;
+
+    this.draw = function() {
+		try {
+            ctx.drawImage(document.getElementById('waves'), this.x, this.y, this.width, this.height);
+		} catch (e) {
+            console.log(e);
+        }
+	};
+}
+
 // Player position that is left to change
-var player, xChange, yChange, framesLeft = -1, platformNumbToJump = jumpUntilPlatformIndex,
-    // When was the last clock added
-    lastClock = minNumbOfPlatformsBeetweenClocks;
+var player, xChange, yChange, framesLeft = -1, platformNumbToJump = jumpUntilPlatformIndex;
 var Player = function() {
 	this.isDead = false;
     // Player object size (square)
@@ -75,7 +90,6 @@ var Player = function() {
     this.jumpPlatform = function(numberOfPlatforms) {
         // Jump only if not already jumping
         if (framesLeft == -1) {
-            console.log('Jumping {0} platforms'.format(numberOfPlatforms));
             // Create new platforms
             if (platformNumbToJump == 0) {
                 for (var i = 0; i < numberOfPlatforms; i++) {
@@ -95,7 +109,6 @@ var Player = function() {
                         if (lastClock >= maxNumbOfPlatformsBeetweenClocks || Math.random() > 0.5) {
                             continue;
                         }
-                        console.log('Adding clock with value 2');
                         newPlatform.addObject(2);
                         lastClock = 0;
                     }
@@ -112,7 +125,6 @@ var Player = function() {
     };
 
     this.move = function() {
-        console.log('Moving player.');
         // Fall down
         if (framesLeft < parseInt(speed / 3)) { this.y += yChange; }
         // Jump up
@@ -126,7 +138,6 @@ var platforms,
     // Index number of the platform the player is currently on
     currentPlatformIndex = 1, currentPlatformArrangement, currentPlatformNumber = 0;
 function Platform(type) {
-    console.log('New platform');
     // Platform type: 0->Empty, 1->Full
     this.type = type;
 
@@ -139,7 +150,7 @@ function Platform(type) {
 	this.x = index * this.width;
 	this.y = startPosition - index * platformHeightDifference;
 
-    // currentLevel
+    // Current level
     var currentLevel = (parseInt(currentPlatformIndex) / 10).toFixed(0) % numbLevels + 1;
 
     this.color = '{0}_platform_{1}'.format(currentLevel, currentPlatformNumber);
@@ -149,9 +160,8 @@ function Platform(type) {
 	//Function to draw it
 	this.draw = function() {
 		try {
-            if (type != 0) {
-                ctx.drawImage(document.getElementById(this.color), this.x, this.y, this.width, this.height);
-            }
+            if (type != 0) ctx.drawImage(document.getElementById(this.color), this.x, this.y, this.width, this.height);
+            if (this.hasObject) this.object.draw();
 		} catch (e) {
             console.log(e);
         }
@@ -166,7 +176,6 @@ function Platform(type) {
     };
 
     this.move = function() {
-        console.log('Moving platforms.');
         if (framesLeft < parseInt(speed / 3)) {
             this.y -= yChange;
             if (this.hasObject) this.object.y -= yChange;
@@ -180,6 +189,8 @@ function Platform(type) {
 }
 
 // Object class
+// When was the last clock added
+var lastClock = minNumbOfPlatformsBeetweenClocks;
 function Object(platform, type) {
     // Types: 2->+2 seconds
     this.type = type;
@@ -211,15 +222,12 @@ function init() {
             }
             framesLeft --;
         } else if (framesLeft == 0) {
-            console.log('Jump completed');
-
             // Remove old platforms
-            while (platforms.length > numbPlatforms) { console.log('Removing platform'); platforms.shift(); }
+            while (platforms.length > numbPlatforms) platforms.shift();
             // Fix user and platforms positions if necessary (in case of variations)
             fixPositions();
 
             framesLeft = -1;
-            console.log('-------------------------');
         }
 
         //Adding keyboard controls
@@ -234,7 +242,6 @@ function init() {
 	}
 
     function fixPositions () {
-        console.log('Fixing position');
         // Fix player position else platforms
         if (platformNumbToJump > 0) {
             player.x = platformWidth * jumpUntilPlatformIndex;
@@ -257,12 +264,6 @@ function init() {
         //Function for clearing canvas in each consecutive frame
         ctx.clearRect(0, 0, width, height);
 
-        // Draw platforms
-        platforms.forEach(function(p) {
-            p.draw();
-            if (p.hasObject) p.object.draw();
-        });
-
         // Draw player
         playerCalculation();
 
@@ -271,26 +272,40 @@ function init() {
             player.isDead = true;
             gameOver();
         } else if (platforms[jumpUntilPlatformIndex].hasObject) {
-            console.log('Picked object, adding {0} seconds.'.format(platforms[jumpUntilPlatformIndex].object.type));
             // If platforms has a clock object add time to player
             millisecondsLeft += 1000 * platforms[jumpUntilPlatformIndex].object.type;
             platforms[jumpUntilPlatformIndex].hasObject = false;
         }
+        ocean.draw();
+
+        // Draw platforms
+        platforms.forEach(function(p) {
+            p.draw();
+        });
 
         // Update score
         var scoreText = document.getElementById('score');
         scoreText.innerHTML = currentPlatformIndex.toString();
 	}
-
+    var fallingSpeed = 2;
 	function animloop() {
+        // Is the player in the sea?
+        if (platforms[0].y <= -300) return;
+
         // If player dead don't animate
         if (player.isDead) {
+            // If player is falling and is on the sea level lower sea
+            if (platforms[0].y <= 0) ocean.y -= fallingSpeed;
             platforms.forEach(function(p, i) {
+                p.hasObject = false;
                 p.height = height + i * platformHeightDifference;
-                p.y -= 3;
+
+                // Simulate falling
+                if (fallingSpeed < 10) fallingSpeed += 2;
+                p.y -= fallingSpeed;
             });
         }
-		update();
+        update();
 		requestAnimFrame(animloop);
 	}
     animloop();
@@ -316,11 +331,15 @@ function CountDown () {
 function newGame() {
     // Reset all variables
     player = new Player();
-    platforms = [];
-    for (var i = 0; i < numbPlatforms; i++) platforms.push(new Platform(1));
+    ocean = new Ocean();
+
     currentPlatformIndex = 1;
     currentPlatformArrangement = [];
     millisecondsLeft = startSeconds;
+    platformNumbToJump = jumpUntilPlatformIndex;
+    currentPlatformNumber = 0;
+    platforms = [];
+    for (var i = 0; i < numbPlatforms; i++) platforms.push(new Platform(1));
     countDownInterval = setInterval(CountDown, 100);
     showScoreBoard();
     hideMenu();
