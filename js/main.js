@@ -28,29 +28,29 @@ canvas.height = height;
 // Settings for the game
 // Number of platforms per frame
 var numbPlatforms = 5,
-    numbLevels = 3;
     // Player movement speed
     speed = 16,
     // Seconds to give the player
     startSeconds = 1000 * 20;
-    // Player start position == Padding from bottom
-    startPosition = height - 200,
+
+// Player start position == Padding from bottom
+var startPosition = height - 200,
     // Difference in height between two platforms
     platformHeightDifference = (height / 2 / numbPlatforms).toFixed(0),
     // Width of each platform and of player
     platformWidth = width / numbPlatforms,
     // Possible platform arrangements
-    possiblePlatformArrangement = [[1,1,1,0,1,1,1], [1,0,1,0,1,1], [1,1,0,1,0,1], [1,0,1,0,1,0,1]];
+    possiblePlatformArrangement = [[1,1,1,0,1,1,1], [1,0,1,0,1,1], [1,1,0,1,0,1], [1,0,1,0,1,0,1]],
     // On which platform to stop player jumping out of frame
     jumpUntilPlatformIndex = 1,
-    minNumbOfPlatformsBeetweenClocks = 4,
-    maxNumbOfPlatformsBeetweenClocks = 12,
-    numberOfPlatformImages = 4;
+    // Generate clocks between this two values
+    minNumbOfPlatformsBetweenClocks = 4,
+    maxNumbOfPlatformsBetweenClocks = 12;
 
 var ocean;
 function Ocean () {
     this.width = width;
-    this.height = height*2;
+    this.height = height * 2;
     this.x = 0;
     this.y = height - 50;
 
@@ -64,19 +64,14 @@ function Ocean () {
 }
 
 // Player position that is left to change
-var player, xChange, yChange, framesLeft = -1, platformNumbToJump = jumpUntilPlatformIndex, buttonTwoDisabled;
+var player, xChange, yChange, framesLeft, platformNumbToJump, buttonTwoDisabled, fallingSpeed;
 var Player = function() {
 	this.isDead = false;
     // Player object size (square)
 	this.width = this.height = platformWidth;
-
     // Player position
 	this.x = 0;
 	this.y = startPosition - this.height;
-
-    // Player changes per one jump
-    this.moveX = platformWidth / speed;
-    this.moveY = platformHeightDifference * 2 / speed;
 
 	//Function to draw it
 	this.draw = function() {
@@ -93,7 +88,6 @@ var Player = function() {
             // Create new platforms
             if (platformNumbToJump == 0) {
                 for (var i = 0; i < numberOfPlatforms; i++) {
-
                     // If next platform types are empty, randomly select one from possiblePlatformArrangement list
                     if (currentPlatformArrangement.length == 0) {
                         var index = (Math.random()*(possiblePlatformArrangement.length - 1)).toFixed(0);
@@ -101,23 +95,19 @@ var Player = function() {
                     }
 
                     var newPlatform = new Platform(currentPlatformArrangement.pop());
-                    platforms.push(newPlatform);
-
-                    // Add clock only if platform type is 1
-                    if (newPlatform.type == 1 && lastClock > minNumbOfPlatformsBeetweenClocks) {
-                        // If max reached add clock, else random
-                        if (lastClock >= maxNumbOfPlatformsBeetweenClocks || Math.random() > 0.5) {
-                            continue;
-                        }
+                    // Add clock only if platform type is 1 and last clock was added between max and min
+                    if (newPlatform.type == 1 && lastClock > minNumbOfPlatformsBetweenClocks &&
+                        (lastClock >= maxNumbOfPlatformsBetweenClocks || Math.random() < 0.5)) {
                         newPlatform.addObject(2);
                         lastClock = 0;
                     }
+                    platforms.push(newPlatform);
                     lastClock += 1;
                 }
             }
             // How much will player actually move each frame
-            xChange = player.moveX * numberOfPlatforms;
-            yChange = player.moveY * numberOfPlatforms;
+            xChange = platformWidth / speed * numberOfPlatforms;
+            yChange = platformHeightDifference * 2 / speed * numberOfPlatforms;
             framesLeft = speed;
 
             currentPlatformIndex += numberOfPlatforms;
@@ -146,64 +136,62 @@ function Platform(type) {
 	this.height = height;
 
     // Platform position
-    var index = platforms.length;
-	this.x = index * this.width;
-	this.y = startPosition - index * platformHeightDifference;
+	this.x = platforms.length * this.width;
+	this.y = startPosition - platforms.length * platformHeightDifference;
 
-    // Current level
-    var currentLevel = (parseInt(currentPlatformIndex) / 10).toFixed(0) % numbLevels + 1;
+    // Current level, number of images is 3, new level per 10 platforms
+    var currentLevel = (parseInt(currentPlatformIndex) / 10).toFixed(0) % 3 + 1;
 
-    this.color = '{0}_platform_{1}'.format(currentLevel, currentPlatformNumber);
+    this.backgroundImg = document.getElementById('{0}_platform_{1}'.format(currentLevel, currentPlatformNumber));
     currentPlatformNumber ++;
-    if (currentPlatformNumber == numberOfPlatformImages) currentPlatformNumber = 0;
+    // Number of platform images
+    if (currentPlatformNumber == 4) currentPlatformNumber = 0;
 
 	//Function to draw it
 	this.draw = function() {
 		try {
-            if (type != 0) ctx.drawImage(document.getElementById(this.color), this.x, this.y, this.width, this.height);
-            if (this.hasObject) this.object.draw();
+            if (type != 0) ctx.drawImage(this.backgroundImg, this.x, this.y, this.width, this.height);
+            if (this.object !== null) this.object.draw();
 		} catch (e) {
             console.log(e);
         }
 	};
 
     this.object = null;
-    this.hasObject = false;
     // Add object to platform
     this.addObject = function(type) {
         this.object = new Object(this, type);
-        this.hasObject = true;
     };
 
     this.move = function() {
         if (framesLeft < parseInt(speed / 3)) {
             this.y -= yChange;
-            if (this.hasObject) this.object.y -= yChange;
+            if (this.object !== null) this.object.y -= yChange;
         } else {
             this.y += yChange;
-            if (this.hasObject) this.object.y += yChange;
+            if (this.object !== null) this.object.y += yChange;
         }
         this.x -= xChange;
-        if (this.hasObject) this.object.x -= xChange;
+        if (this.object !== null) this.object.x -= xChange;
     };
 }
 
 // Object class
 // When was the last clock added
-var lastClock = minNumbOfPlatformsBeetweenClocks;
+var lastClock;
 function Object(platform, type) {
     // Types: 2->+2 seconds
     this.type = type;
-    if (type == 2) this.image = 'stopwatch2';
+    this.image = document.getElementById('stopwatch{0}'.format(type));
     this.width = platformWidth - 20;
-    this.height = 40;
+    this.height = this.width;
 
     this.x = platform.x + 10;
     this.y = platform.y - this.height;
 
     this.draw = function() {
 		try {
-            ctx.drawImage(document.getElementById(this.image), this.x, this.y, this.width, this.height);
+            ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
 		} catch (e) {
             console.log(e);
         }
@@ -226,11 +214,8 @@ function init() {
             while (platforms.length > numbPlatforms) platforms.shift();
             // Fix user and platforms positions if necessary (in case of variations)
             fixPositions();
-
             framesLeft = -1;
         }
-
-        player.draw();
 	}
 
     function fixPositions () {
@@ -263,42 +248,40 @@ function init() {
 
         // Draw player
         playerCalculation();
+        player.draw();
 
         // Is platform empty
         if (platforms[jumpUntilPlatformIndex].type == 0 || millisecondsLeft <= 0) {
             player.isDead = true;
             gameOver();
-        } else if (platforms[jumpUntilPlatformIndex].hasObject) {
+        } else if (platforms[jumpUntilPlatformIndex].object !== null) {
             // If platforms has a clock object add time to player
             millisecondsLeft += 1000 * platforms[jumpUntilPlatformIndex].object.type;
-            platforms[jumpUntilPlatformIndex].hasObject = false;
+            platforms[jumpUntilPlatformIndex].object = null;
         }
         ocean.draw();
 
         // Draw platforms
-        platforms.forEach(function(p) {
-            p.draw();
-        });
+        platforms.forEach(function(p) { p.draw(); });
 
         // Update score
-        var scoreText = document.getElementById('score');
-        scoreText.innerHTML = currentPlatformIndex.toString();
+        document.getElementById('score').innerHTML = currentPlatformIndex.toString();
 	}
-    var fallingSpeed = 2;
+
 	function animloop() {
         // Is the player in the sea?
-        if (platforms[0].y <= -300) return;
+        if (platforms[0].y <= -height) return;
 
         // If player dead don't animate
         if (player.isDead) {
             // If player is falling and is on the sea level lower sea
             if (platforms[0].y <= 0) ocean.y -= fallingSpeed;
             platforms.forEach(function(p, i) {
-                p.hasObject = false;
+                p.object = null;
                 p.height = height + i * platformHeightDifference;
 
                 // Simulate falling
-                if (fallingSpeed < 10) fallingSpeed += 2;
+                if (fallingSpeed < 16) fallingSpeed += 2;
                 p.y -= fallingSpeed;
             });
         }
@@ -307,16 +290,6 @@ function init() {
 	}
     animloop();
 	hideMenu();
-}
-
-function showScoreBoard() {
-    document.getElementById('scoreBoard').style.zIndex = 1;
-    document.getElementById('buttons').style.zIndex = 1;
-}
-
-function hideScoreBoard() {
-    document.getElementById('scoreBoard').style.zIndex = -1;
-    document.getElementById('buttons').style.zIndex = -1;
 }
 
 // --------------------------- Stopwatch ---------------------------
@@ -328,19 +301,28 @@ function CountDown () {
 }
 
 function newGame() {
-    document.getElementById('twoJump').style.background = 'rgba(0, 230, 0, 0.2)';
     // Reset all variables
-    player = new Player();
-    ocean = new Ocean();
+    fallingSpeed = 2;
+    framesLeft = -1;
+    lastClock = minNumbOfPlatformsBetweenClocks;
+    document.getElementById('twoJump').style.background = 'rgba(0, 230, 0, 0.2)';
     buttonTwoDisabled = true;
     currentPlatformIndex = 1;
     currentPlatformArrangement = [];
     millisecondsLeft = startSeconds;
     platformNumbToJump = jumpUntilPlatformIndex;
     currentPlatformNumber = 0;
+
+    // Reset all objects
+    player = new Player();
+    ocean = new Ocean();
     platforms = [];
     for (var i = 0; i < numbPlatforms; i++) platforms.push(new Platform(1));
-    showScoreBoard();
+
+    // Show score board
+    document.getElementById('scoreBoard').style.zIndex = 1;
+    document.getElementById('buttons').style.zIndex = 1;
+    // Hide main menu
     hideMenu();
     init();
 }
@@ -359,7 +341,9 @@ function showMenu() {
 
 // Show game over menu
 function gameOver() {
-    hideScoreBoard();
+    // Hide score board
+    document.getElementById('scoreBoard').style.zIndex = -1;
+    document.getElementById('buttons').style.zIndex = -1;
     hideMenu();
 	document.getElementById('gameOverMenu').style.zIndex = 1;
 	document.getElementById('gameOverScore').innerHTML = 'You scored {0} points!'.format(currentPlatformIndex);
@@ -372,13 +356,10 @@ menuLoop();
 
 function playerJump (steps) {
     if (!player.isDead) {
+        // If button 2 is disabled skip
         if (parseInt(steps) === 2 && buttonTwoDisabled) {
             return;
         }
         player.jumpPlatform(steps);
     }
-}
-
-function restartCanvas () {
-    location.reload();
 }
