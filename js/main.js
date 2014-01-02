@@ -139,8 +139,8 @@ function Platform(type) {
 	this.x = platforms.length * this.width;
 	this.y = startPosition - platforms.length * platformHeightDifference;
 
-    // Current level, number of images is 3, new level per 10 platforms
-    var currentLevel = (parseInt(currentPlatformIndex) / 10).toFixed(0) % 3 + 1;
+    // Current level, number of images is 3, new level per 20 platforms
+    var currentLevel = (parseInt(currentPlatformIndex) / 20).toFixed(0) % 3 + 1;
 
     this.backgroundImg = document.getElementById('{0}_platform_{1}'.format(currentLevel, currentPlatformNumber));
     currentPlatformNumber ++;
