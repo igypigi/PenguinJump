@@ -31,12 +31,12 @@ var numbPlatforms = 5,
     // Player movement speed
     speed = 16,
     // Seconds to give the player
-    startSeconds = 1000 * 20;
+    startSeconds = 1000 * 200;
 
 // Player start position == Padding from bottom
 var sprite = document.getElementById('sprite'),
     platformsSprite = document.getElementById('platforms'),
-    startPosition = height - 200,
+    startPosition = 2/3 * height,
     // Difference in height between two platforms
     platformHeightDifference = (height / 2 / numbPlatforms).toFixed(0),
     // Width of each platform and of player
