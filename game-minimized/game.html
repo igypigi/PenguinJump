@@ -1,0 +1,79 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+	<title>Penguin Jump</title>
+    <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport' />
+    <meta name="viewport" content="width=device-width" />
+
+    <style>
+        @import url(http://fonts.googleapis.com/css?family=Gloria+Hallelujah);
+        *{box-sizing:border-box}
+        body{font-family:'Gloria Hallelujah', cursive;margin:0;padding:0}
+        .hide{display:none}
+        .container{height:100%;width:100%;position:relative;overflow:hidden}
+        canvas{display:block;background:url(background-paper.png) top left}
+        #scoreBoard{width:100%;height:10%;background:rgba(182,200,220,0.7);position:absolute;top:0;left:0;z-index:-1}
+        #scoreBoard p{font-size:20px;float:left;margin:5px 0 0 15px;padding:0}
+        #mainMenu,#gameOverMenu{height:100%;width:100%;text-align:center;position:absolute;top:0;left:0;z-index:1}
+        #gameOverMenu{z-index:-1}
+        h2,h3,h1{font-weight:400}
+        h1{font-size:50px;color:#5a5816;transform:rotate(-10deg);margin:0}
+        h3{text-align:right;color:#5e96be;margin:-10px 20px 0 0}
+        h3 a{color:#5a5816}
+        #gameOverScore{color:#ADFF2F}
+        #penguin{background:url(sprite.png) 0 0 no-repeat;width:70px;height:70px;margin:50px auto}
+        .button{width:100px;height:40px;background:#90EE90;display:block;color:#000;font-size:20px;text-decoration:none;position:absolute;bottom:70px;left:40%}
+        .info{position:absolute;right:20px;bottom:0;color:green;margin:0}
+        #buttons{position:absolute;bottom:0;left:0;z-index:-1;width:100%;height:20%;margin-bottom:30px}
+        #buttons > div{border-radius:40%;width:26%;height:100%;background:rgba(0,230,0,1.0);padding:20px}
+        #buttons > div > img{width:100%;height:100%;margin:0 auto}
+        #oneJump{float:left;margin-left:30px}
+        #twoJump{float:right;margin-right:30px}
+    </style>
+</head>
+
+<body onresize="location.reload();">
+	<div class="container">
+		<canvas id="canvas">
+			Aww, your browser doesn't support HTML5!
+		</canvas>
+
+		<div id="mainMenu">
+			<h1>Penguin Jump</h1>
+			<h3>using HTML5,</h3>
+            <div id="penguin"></div>
+			<p class="info">
+				use CIRCLES to move for one or two platforms
+			</p>
+			<a class="button" href="javascript:newGame()">Play</a>
+		</div>
+
+		<div id="gameOverMenu">
+			<h1>Game over!</h1>
+			<h3 id="gameOverScore">you scored 0 points</h3>
+            <a class="button" href="javascript:showMenu()">Back to menu</a>
+		</div>
+
+        <img id="sprite" src="sprite.png" class="hide"/>
+        <img id="platforms" src="platforms.png" class="hide"/>
+
+		<div id="scoreBoard">
+			<p id="score">0</p>
+            <p id="stopwatch">0</p>
+		</div>
+
+        <div id="buttons">
+            <div id="oneJump" onclick="playerJump(1)">
+                <img src="oneJump.png">
+            </div>
+            <div id="twoJump" onclick="playerJump(2)">
+                <img src="twoJump.png">
+            </div>
+        </div>
+
+	</div>
+    <script type="text/javascript">
+        function Ocean(){this.width=width;this.height=height*2;this.x=0;this.y=height-50;this.draw=function(){try{ctx.drawImage(sprite,534,0,2e3,2e3,this.x,this.y,this.width,this.height)}catch(e){console.log(e)}}}function Platform(e){this.type=e;this.width=platformWidth;this.height=height;this.x=platforms.length*this.width;this.y=startPosition-platforms.length*platformHeightDifference;var t=(parseInt(currentPlatformIndex)/20).toFixed(0)%3;this.cx=t*280+currentPlatformNumber*70;currentPlatformNumber++;if(currentPlatformNumber==4)currentPlatformNumber=0;this.draw=function(){try{if(e!=0)ctx.drawImage(platformsSprite,this.cx,0,60,177,this.x,this.y,this.width,this.height);if(this.object!==null)this.object.draw()}catch(t){console.log(t)}};this.object=null;this.addObject=function(e){this.object=new Object(this,e)};this.move=function(){if(framesLeft<parseInt(speed/3)){this.y-=yChange;if(this.object!==null)this.object.y-=yChange}else{this.y+=yChange;if(this.object!==null)this.object.y+=yChange}this.x-=xChange;if(this.object!==null)this.object.x-=xChange}}function Object(e,t){this.type=t;this.width=platformWidth-20;this.height=this.width;this.x=e.x+10;this.y=e.y-this.height;this.draw=function(){try{ctx.drawImage(sprite,80,0,444,594,this.x,this.y,this.width,this.height)}catch(e){console.log(e)}}}function init(){function e(){if(framesLeft>0){if(platformNumbToJump==0){platforms.forEach(function(e){e.move()})}else{player.move()}framesLeft--}else if(framesLeft==0){while(platforms.length>numbPlatforms)platforms.shift();t();framesLeft=-1}}function t(){if(platformNumbToJump>0){player.x=platformWidth*jumpUntilPlatformIndex;player.y=startPosition-jumpUntilPlatformIndex*platformHeightDifference-player.height;platformNumbToJump--;countDownInterval=setInterval(CountDown,100);buttonTwoDisabled=false;document.getElementById("twoJump").style.background="rgba(0, 230, 0, 1.0)"}else{var e=0;platforms.forEach(function(t,n){if(n<platforms.length-numbPlatforms)return;t.x=platformWidth*e;t.y=startPosition-parseInt(platformHeightDifference)*e;e++})}}function n(){ctx.clearRect(0,0,width,height);e();player.draw();if(platforms[jumpUntilPlatformIndex].type==0||millisecondsLeft<=0){player.isDead=true;gameOver()}else if(platforms[jumpUntilPlatformIndex].object!==null){millisecondsLeft+=1e3*platforms[jumpUntilPlatformIndex].object.type;platforms[jumpUntilPlatformIndex].object=null}ocean.draw();platforms.forEach(function(e){e.draw()});document.getElementById("score").innerHTML=currentPlatformIndex.toString()}function r(){if(platforms[0].y<=-height)return;if(player.isDead){if(platforms[0].y<=0)ocean.y-=fallingSpeed;platforms.forEach(function(e,t){e.object=null;e.height=height+t*platformHeightDifference;if(fallingSpeed<16)fallingSpeed+=2;e.y-=fallingSpeed})}n();requestAnimFrame(r)}r();hideMenu()}function CountDown(){millisecondsLeft-=100;seconds=parseInt(millisecondsLeft/1e3);document.getElementById("stopwatch").innerHTML=(seconds<10?"0":"")+seconds+":"+millisecondsLeft%1e3/100}function newGame(){fallingSpeed=2;framesLeft=-1;lastClock=minNumbOfPlatformsBetweenClocks;document.getElementById("twoJump").style.background="rgba(0, 230, 0, 0.2)";buttonTwoDisabled=true;currentPlatformIndex=1;currentPlatformArrangement=[];millisecondsLeft=startSeconds;platformNumbToJump=jumpUntilPlatformIndex;currentPlatformNumber=0;player=new Player;ocean=new Ocean;platforms=[];for(var e=0;e<numbPlatforms;e++)platforms.push(new Platform(1));document.getElementById("scoreBoard").style.zIndex=1;document.getElementById("buttons").style.zIndex=1;hideMenu();init()}function hideMenu(){document.getElementById("mainMenu").style.zIndex=-1}function showMenu(){ctx.clearRect(0,0,width,height);document.getElementById("mainMenu").style.zIndex=1;document.getElementById("gameOverMenu").style.zIndex=-1}function gameOver(){document.getElementById("scoreBoard").style.zIndex=-1;document.getElementById("buttons").style.zIndex=-1;hideMenu();document.getElementById("gameOverMenu").style.zIndex=1;document.getElementById("gameOverScore").innerHTML="You scored {0} points!".format(currentPlatformIndex)}function menuLoop(){requestAnimFrame(menuLoop)}function playerJump(e){if(!player.isDead){if(parseInt(e)===2&&buttonTwoDisabled){return}player.jumpPlatform(e)}}window.requestAnimFrame=function(){return window.requestAnimationFrame||window.webkitRequestAnimationFrame||window.mozRequestAnimationFrame||window.oRequestAnimationFrame||window.msRequestAnimationFrame||function(e){window.setTimeout(e,1e3/60)}}();Array.prototype.clone=function(){return this.slice(0)};String.prototype.format=function(){var e=this;for(var t=0;t<arguments.length;t++){e=e.replace(new RegExp("\\{"+t+"\\}","gi"),arguments[t])}return e};var width=window.innerWidth,height=window.innerHeight;var canvas=document.getElementById("canvas");var ctx=canvas.getContext("2d");canvas.width=width;canvas.height=height;var numbPlatforms=5,speed=16,startSeconds=1e3*200;var sprite=document.getElementById("sprite"),platformsSprite=document.getElementById("platforms"),startPosition=2/3*height,platformHeightDifference=(height/2/numbPlatforms).toFixed(0),platformWidth=width/numbPlatforms,possiblePlatformArrangement=[[1,1,1,0,1,1,1],[1,0,1,0,1,1],[1,1,0,1,0,1],[1,0,1,0,1,0,1]],jumpUntilPlatformIndex=1,minNumbOfPlatformsBetweenClocks=4,maxNumbOfPlatformsBetweenClocks=12;var ocean;var player,xChange,yChange,framesLeft,platformNumbToJump,buttonTwoDisabled,fallingSpeed;var Player=function(){this.isDead=false;this.width=this.height=platformWidth;this.x=0;this.y=startPosition-this.height;this.draw=function(){try{ctx.drawImage(sprite,0,0,70,70,this.x,this.y,this.width,this.height)}catch(e){console.log(e)}};this.jumpPlatform=function(e){if(framesLeft==-1){if(platformNumbToJump==0){for(var t=0;t<e;t++){if(currentPlatformArrangement.length==0){var n=(Math.random()*(possiblePlatformArrangement.length-1)).toFixed(0);currentPlatformArrangement=possiblePlatformArrangement[n].clone()}var r=new Platform(currentPlatformArrangement.pop());if(r.type==1&&lastClock>minNumbOfPlatformsBetweenClocks&&(lastClock>=maxNumbOfPlatformsBetweenClocks||Math.random()<.5)){r.addObject(2);lastClock=0}platforms.push(r);lastClock+=1}}xChange=platformWidth/speed*e;yChange=platformHeightDifference*2/speed*e;framesLeft=speed;currentPlatformIndex+=e}};this.move=function(){if(framesLeft<parseInt(speed/3)){this.y+=yChange}else{this.y-=yChange}this.x+=xChange}};var platforms,currentPlatformIndex=1,currentPlatformArrangement,currentPlatformNumber=0;var lastClock;var millisecondsLeft,seconds,countDownInterval;menuLoop()
+    </script>
+</body>
+</html>	
