@@ -31,7 +31,7 @@ var numbPlatforms = 5,
     // Player movement speed
     speed = 16,
     // Seconds to give the player
-    startSeconds = 1000 * 200;
+    startSeconds = 1000 * 30;
 
 // Player start position == Padding from bottom
 var sprite = document.getElementById('sprite'),
