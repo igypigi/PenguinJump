@@ -1,0 +1,50 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+	<title>Penguin Jump</title>
+    <link rel="stylesheet" href="main.css">
+</head>
+
+<body onresize="location.reload();">
+	<div class="container">
+		<canvas id="canvas">
+			Aww, your browser doesn't support HTML5!
+		</canvas>
+
+		<div id="mainMenu">
+			<h1>Penguin Jump</h1>
+			<h3>using HTML5,</h3>
+
+			<p class="info">
+				use CIRCLES to move for one or two blocks
+			</p>
+			<a class="button" href="javascript:newGame()">Play</a>
+		</div>
+
+		<div id="gameOverMenu">
+			<h1>Game over!</h1>
+			<h3 id="gameOverScore">you scored 0 points</h3>
+            <a class="button" href="javascript:showMenu()">Back to menu</a>
+		</div>
+
+        <img id="sprite" src="images/sprite.png" class="hide"/>
+        <img id="platforms" src="images/platforms.png" class="hide"/>
+
+		<div id="scoreBoard">
+			<p id="score">0</p>
+            <p id="stopwatch">0</p>
+		</div>
+
+        <div id="buttons">
+            <div id="oneJump" onclick="playerJump(1)">
+                <img src="images/oneJump.png">
+            </div>
+            <div id="twoJump" onclick="playerJump(2)">
+                <img src="images/twoJump.png">
+            </div>
+        </div>
+
+	</div>
+    <script type="text/javascript" src="main.js"></script>
+</body>
+</html>	

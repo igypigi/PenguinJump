@@ -34,7 +34,9 @@ var numbPlatforms = 5,
     startSeconds = 1000 * 20;
 
 // Player start position == Padding from bottom
-var startPosition = height - 200,
+var sprite = document.getElementById('sprite'),
+    platformsSprite = document.getElementById('platforms'),
+    startPosition = height - 200,
     // Difference in height between two platforms
     platformHeightDifference = (height / 2 / numbPlatforms).toFixed(0),
     // Width of each platform and of player
@@ -56,7 +58,7 @@ function Ocean () {
 
     this.draw = function() {
 		try {
-            ctx.drawImage(document.getElementById('waves'), this.x, this.y, this.width, this.height);
+            ctx.drawImage(sprite, 534, 0, 2000, 2000, this.x, this.y, this.width, this.height);
 		} catch (e) {
             console.log(e);
         }
@@ -76,7 +78,7 @@ var Player = function() {
 	//Function to draw it
 	this.draw = function() {
 		try {
-            ctx.drawImage(document.getElementById('player'), this.x, this.y, this.width, this.height);
+            ctx.drawImage(sprite, 0, 0, 70, 70, this.x, this.y, this.width, this.height);
 		} catch (e) {
             console.log(e);
         }
@@ -140,9 +142,10 @@ function Platform(type) {
 	this.y = startPosition - platforms.length * platformHeightDifference;
 
     // Current level, number of images is 3, new level per 20 platforms
-    var currentLevel = (parseInt(currentPlatformIndex) / 20).toFixed(0) % 3 + 1;
+    var currentLevel = (parseInt(currentPlatformIndex) / 20).toFixed(0) % 3;
 
-    this.backgroundImg = document.getElementById('{0}_platform_{1}'.format(currentLevel, currentPlatformNumber));
+    // Sprite x
+    this.cx = currentLevel * 280 + currentPlatformNumber * 70;
     currentPlatformNumber ++;
     // Number of platform images
     if (currentPlatformNumber == 4) currentPlatformNumber = 0;
@@ -150,7 +153,7 @@ function Platform(type) {
 	//Function to draw it
 	this.draw = function() {
 		try {
-            if (type != 0) ctx.drawImage(this.backgroundImg, this.x, this.y, this.width, this.height);
+            if (type != 0) ctx.drawImage(platformsSprite,this.cx, 0, 60, 177, this.x, this.y, this.width, this.height);
             if (this.object !== null) this.object.draw();
 		} catch (e) {
             console.log(e);
@@ -182,7 +185,6 @@ var lastClock;
 function Object(platform, type) {
     // Types: 2->+2 seconds
     this.type = type;
-    this.image = document.getElementById('stopwatch{0}'.format(type));
     this.width = platformWidth - 20;
     this.height = this.width;
 
@@ -191,7 +193,7 @@ function Object(platform, type) {
 
     this.draw = function() {
 		try {
-            ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+            ctx.drawImage(sprite, 80, 0, 444, 594, this.x, this.y, this.width, this.height);
 		} catch (e) {
             console.log(e);
         }
